@@ -538,14 +538,14 @@
     const label = getLabelText();
     addToHistory(label);
 
-    printArea.innerHTML = Array.from({length: 4}, (_, i) => `
+    printArea.innerHTML = Array.from({length: 2}, (_, i) => `
       <div class="print-page">
         <div class="print-company">Flash Global</div>
         <div class="print-project">Project Bluebell</div>
         <div class="print-border">
           <div class="print-sub">Pallet ID</div>
           <div class="print-pallet-label">${label}</div>
-          <div class="print-copy-num">Copy ${i + 1} of 4</div>
+          <div class="print-copy-num">Copy ${i + 1} of 2</div>
         </div>
       </div>
     `).join('');
