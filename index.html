@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bluebell — Pallet Label Generator</title>
+<style>
+  :root {
+    --blue: #2D4B6E;
+    --blue-light: #3a5f8a;
+    --black: #0f1923;
+    --white: #FAFAFA;
+    --mid: #7a9ab8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Calibri', sans-serif;
+    background: var(--black);
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+
+  header { text-align: center; margin-bottom: 40px; }
+  .brand { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 20px; }
+  .brand-name { font-size: 22px; font-weight: 700; letter-spacing: 3px; color: var(--white); text-transform: uppercase; }
+  .brand-name span { color: var(--mid); font-weight: 400; }
+  .brand-line { width: 48px; height: 3px; background: var(--blue); border-radius: 2px; }
+  .project-tag { font-size: 11px; letter-spacing: 5px; color: var(--mid); text-transform: uppercase; margin-top: 6px; }
+  h1 { font-weight: 700; font-size: clamp(26px, 5vw, 44px); line-height: 1; }
+  h1 span { color: var(--mid); }
+  .subtitle { color: var(--mid); font-size: 13px; margin-top: 8px; letter-spacing: 1px; }
+
+  /* Mode toggle */
+  .mode-toggle {
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: #0f1923; border: 1px solid #243447;
+    border-radius: 12px; padding: 4px; margin-bottom: 28px; gap: 4px;
+  }
+  .mode-btn {
+    border: none; border-radius: 9px; cursor: pointer;
+    font-family: 'Calibri', sans-serif; font-weight: 700; font-size: 14px;
+    padding: 12px; transition: all 0.2s; color: var(--mid); background: transparent;
+  }
+  .mode-btn.active { background: var(--blue); color: var(--white); }
+
+  .card {
+    background: #162030; border: 1px solid #243447;
+    border-radius: 16px; padding: 36px;
+    width: 100%; max-width: 520px; margin-bottom: 24px;
+  }
+
+  .section-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; }
+
+  .input-row   { display: grid; grid-template-columns: 1fr 1fr;     gap: 12px; margin-bottom: 24px; }
+  .input-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .input-group { display: flex; flex-direction: column; gap: 6px; }
+
+  label { font-size: 12px; color: var(--mid); letter-spacing: 1px; text-transform: uppercase; }
+
+  input[type="text"], input[type="number"] {
+    background: #1e3550; border: 1px solid #2d4b6e; border-radius: 8px;
+    color: var(--white); font-family: 'Calibri', sans-serif;
+    font-size: 20px; font-weight: 700; padding: 14px 16px;
+    width: 100%; outline: none; transition: border-color 0.2s;
+  }
+  input:focus { border-color: var(--mid); }
+
+  .preview-box {
+    background: var(--blue); border-radius: 12px; padding: 28px 20px;
+    text-align: center; margin-bottom: 28px; position: relative; overflow: hidden;
+  }
+  .preview-box::before {
+    content: ''; position: absolute; top: -40px; right: -40px;
+    width: 140px; height: 140px; background: rgba(255,255,255,0.05); border-radius: 50%;
+  }
+  .preview-label { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 6px; }
+  .preview-number { font-weight: 700; font-size: clamp(52px, 12vw, 88px); color: var(--white); line-height: 1; letter-spacing: -2px; position: relative; z-index: 1; }
+  .preview-range-info { font-size: 13px; color: rgba(255,255,255,0.6); margin-top: 10px; letter-spacing: 1px; }
+
+  .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+
+  .btn { border: none; border-radius: 10px; cursor: pointer; font-family: 'Calibri', sans-serif; font-weight: 700; font-size: 14px; padding: 14px 20px; transition: all 0.15s; }
+  .btn:active { transform: scale(0.97); }
+  .btn-prev, .btn-next { background: #1e3550; color: var(--white); border: 1px solid #2d4b6e; }
+  .btn-prev:hover, .btn-next:hover { border-color: var(--mid); background: #243d5c; }
+
+  .btn-print {
+    width: 100%; background: var(--blue); color: var(--white);
+    font-size: 16px; padding: 18px; border-radius: 12px; margin-top: 4px;
+    display: flex; align-items: center; justify-content: center; gap: 10px; border: none; cursor: pointer;
+  }
+  .btn-print:hover { background: var(--blue-light); }
+  .btn-print svg { width: 20px; height: 20px; }
+
+  .copies-note { text-align: center; color: var(--mid); font-size: 12px; margin-top: 12px; letter-spacing: 0.5px; }
+
+  .btn-export {
+    width: 100%; background: transparent; color: var(--mid); font-size: 14px; padding: 13px;
+    border-radius: 12px; margin-top: 10px; display: flex; align-items: center; justify-content: center;
+    gap: 8px; border: 1px solid #243447; cursor: pointer; font-family: 'Calibri', sans-serif;
+    font-weight: 700; transition: all 0.15s;
+  }
+  .btn-export:hover { border-color: var(--mid); color: var(--white); }
+  .btn-export svg { width: 16px; height: 16px; }
+
+  .sync-status { text-align: center; font-size: 11px; letter-spacing: 1px; color: var(--mid); margin-top: 8px; min-height: 16px; }
+  .sync-status.ok  { color: #5aab7a; }
+  .sync-status.err { color: #e07070; }
+
+  .history { width: 100%; max-width: 520px; }
+  .history h2 { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--mid); margin-bottom: 12px; }
+  .history-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .history-chip { background: #162030; border: 1px solid #243447; border-radius: 6px; padding: 6px 14px; font-size: 13px; font-weight: 700; color: #9ab8d4; cursor: pointer; transition: all 0.15s; }
+  .history-chip:hover { border-color: var(--mid); color: var(--white); background: #1e3550; }
+
+  .toast {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #1e3550; border: 1px solid var(--blue); border-radius: 12px;
+    padding: 14px 24px; font-size: 15px; color: var(--white);
+    display: flex; align-items: center; gap: 10px;
+    opacity: 0; transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 9999; white-space: nowrap; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast-dot { width: 8px; height: 8px; background: var(--mid); border-radius: 50%; flex-shrink: 0; }
+  .toast-bold { font-weight: 700; color: var(--mid); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.show { opacity: 1; pointer-events: all; }
+  .modal {
+    background: #162030; border: 1px solid #2d4b6e; border-radius: 20px;
+    padding: 36px; max-width: 400px; width: 90%; text-align: center;
+    transform: scale(0.95); transition: transform 0.2s;
+  }
+  .modal-overlay.show .modal { transform: scale(1); }
+  .modal-icon { font-size: 36px; margin-bottom: 12px; }
+  .modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 10px; }
+  .modal p { color: var(--mid); font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+  .modal p strong { color: var(--white); }
+  .modal-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .modal-cancel { background: #1e3550; color: var(--mid); border: 1px solid #2d4b6e; border-radius: 10px; padding: 13px; font-family: 'Calibri', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .modal-cancel:hover { color: var(--white); border-color: var(--mid); }
+  .modal-confirm { background: var(--blue); color: var(--white); border: none; border-radius: 10px; padding: 13px; font-family: 'Calibri', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.15s; }
+  .modal-confirm:hover { background: var(--blue-light); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ===================== PRINT ===================== */
+  @media print {
+    @page { size: landscape; margin: 0; }
+    body, html { margin: 0; padding: 0; background: white; }
+    body > * { display: none !important; }
+    #print-area { display: block !important; width: 100%; }
+    .print-page { width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; page-break-after: always; background: white; padding: 40px; }
+    .print-page:last-child { page-break-after: avoid; }
+    .print-company { font-family: 'Calibri', sans-serif; font-size: 14pt; font-weight: 700; color: #2D4B6E; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 6px; }
+    .print-project { font-family: 'Calibri', sans-serif; font-size: 10pt; color: #7a9ab8; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px; }
+    .print-border { border: 8px solid #2D4B6E; border-radius: 20px; padding: 48px 80px; display: flex; flex-direction: column; align-items: center; }
+    .print-sub { font-family: 'Calibri', sans-serif; font-size: 14pt; color: #7a9ab8; margin-top: 12px; letter-spacing: 4px; text-align: center; text-transform: uppercase; }
+    .print-pallet-label { font-family: 'Calibri', sans-serif; font-weight: 700; font-size: 160pt; color: #2D4B6E; line-height: 1; text-align: center; }
+    .print-copy-num { font-family: 'Calibri', sans-serif; font-size: 9pt; color: #aaa; margin-top: 20px; letter-spacing: 2px; text-transform: uppercase; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-name">Flash <span>Global</span></div>
+    <div class="brand-line"></div>
+    <div class="project-tag">Project Bluebell</div>
+  </div>
+  <h1>Pallet <span>Labels</span></h1>
+  <div class="subtitle">Generate · Preview · Print 4×</div>
+</header>
+
+<div class="card">
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="btn-single" onclick="setMode('single')">🏷️ Single Label</button>
+    <button class="mode-btn" id="btn-range" onclick="setMode('range')">📦 Range</button>
+  </div>
+
+  <!-- SINGLE -->
+  <div class="panel active" id="panel-single">
+    <div class="section-label">Label Config</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label>Prefix</label>
+        <input type="text" id="prefix" value="PA" maxlength="5" placeholder="PA">
+      </div>
+      <div class="input-group">
+        <label>Number</label>
+        <input type="number" id="num" value="1" min="1" max="9999">
+      </div>
+    </div>
+    <div class="section-label">Preview</div>
+    <div class="preview-box">
+      <div class="preview-label">Pallet ID</div>
+      <div class="preview-number" id="preview-text">PA-1</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-prev" onclick="step(-1)">← Previous</button>
+      <button class="btn btn-next" onclick="step(1)">Next →</button>
+    </div>
+    <button class="btn-print" onclick="printSingle()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print 2 Copies
+    </button>
+    <div class="copies-note">Prints 4 full-page sheets · auto-advances to next</div>
+  </div>
+
+  <!-- RANGE -->
+  <div class="panel" id="panel-range">
+    <div class="section-label">Range Config</div>
+    <div class="input-row-3">
+      <div class="input-group">
+        <label>Prefix</label>
+        <input type="text" id="range-prefix" value="PA" maxlength="5" placeholder="PA">
+      </div>
+      <div class="input-group">
+        <label>From</label>
+        <input type="number" id="range-from" value="1" min="1" max="9999">
+      </div>
+      <div class="input-group">
+        <label>To</label>
+        <input type="number" id="range-to" value="10" min="1" max="9999">
+      </div>
+    </div>
+    <div class="section-label">Preview</div>
+    <div class="preview-box">
+      <div class="preview-label">Range</div>
+      <div class="preview-number" id="range-preview-text">PA-1</div>
+      <div class="preview-range-info" id="range-info">to PA-10 · 10 labels · 40 pages</div>
+    </div>
+    <button class="btn-print" onclick="confirmRange()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print Range
+    </button>
+    <div class="copies-note">4 copies per label · all sent in one print job</div>
+  </div>
+
+  <button class="btn-export" onclick="exportCSV()" style="margin-top:20px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+    Export History to Excel
+  </button>
+  <div class="sync-status" id="sync-status"></div>
+</div>
+
+<div class="history">
+  <h2>Recent Labels (this session)</h2>
+  <div class="history-list" id="history-list"></div>
+</div>
+
+<div id="print-area" style="display:none;"></div>
+
+<div class="toast" id="toast">
+  <div class="toast-dot"></div>
+  <span id="toast-msg">Printed! Next: <span class="toast-bold">PA-2</span></span>
+</div>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-icon">🖨️</div>
+    <h2>Confirm Print Range</h2>
+    <p id="modal-body"></p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-confirm" onclick="executePrintRange()">Print Now</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxj3lddEhi9xCBPbL1pjnwUfVE_XWHGostxL8xw-0A1Edi9hQCkhFJ4eI2uDjgaKCH7/exec';
+
+  const prefixEl    = document.getElementById('prefix');
+  const numEl       = document.getElementById('num');
+  const previewEl   = document.getElementById('preview-text');
+  const historyList = document.getElementById('history-list');
+  const printArea   = document.getElementById('print-area');
+  const toastEl     = document.getElementById('toast');
+  const toastMsg    = document.getElementById('toast-msg');
+  const syncEl      = document.getElementById('sync-status');
+
+  let recentLabels = [];
+  let toastTimer   = null;
+  let currentMode  = 'single';
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('panel-single').classList.toggle('active', mode === 'single');
+    document.getElementById('panel-range').classList.toggle('active', mode === 'range');
+    document.getElementById('btn-single').classList.toggle('active', mode === 'single');
+    document.getElementById('btn-range').classList.toggle('active', mode === 'range');
+    if (mode === 'range') updateRangePreview();
+  }
+
+  // ── Single ────────────────────────────────────────────
+  function getLabelText() {
+    return `${prefixEl.value.trim().toUpperCase() || 'PA'}-${parseInt(numEl.value) || 1}`;
+  }
+  function updatePreview() { previewEl.textContent = getLabelText(); }
+  function step(delta) {
+    numEl.value = Math.max(1, (parseInt(numEl.value) || 1) + delta);
+    updatePreview();
+  }
+  function printSingle() {
+    const label = getLabelText();
+    addToHistory(label);
+    doPrint([label]);
+    logToSheet([label]);
+    const nextNum = (parseInt(numEl.value) || 1) + 1;
+    numEl.value = nextNum;
+    updatePreview();
+    showToast(`Printed! Next: <span class="toast-bold">${prefixEl.value.trim().toUpperCase() || 'PA'}-${nextNum}</span>`);
+  }
+
+  // ── Range ─────────────────────────────────────────────
+  function updateRangePreview() {
+    const prefix = document.getElementById('range-prefix').value.trim().toUpperCase() || 'PA';
+    const from   = parseInt(document.getElementById('range-from').value) || 1;
+    const to     = parseInt(document.getElementById('range-to').value)   || 1;
+    const count  = Math.max(0, to - from + 1);
+    document.getElementById('range-preview-text').textContent = `${prefix}-${from}`;
+    document.getElementById('range-info').textContent = `to ${prefix}-${to} · ${count} label${count !== 1 ? 's' : ''} · ${count * 4} pages`;
+  }
+
+  function confirmRange() {
+    const prefix = document.getElementById('range-prefix').value.trim().toUpperCase() || 'PA';
+    const from   = parseInt(document.getElementById('range-from').value) || 1;
+    const to     = parseInt(document.getElementById('range-to').value)   || 1;
+    if (to < from) { alert('End number must be greater than or equal to start.'); return; }
+    const count = to - from + 1;
+    document.getElementById('modal-body').innerHTML =
+      `You are about to print <strong>${count * 4} pages</strong><br>
+       (4 copies each of <strong>${prefix}-${from}</strong> to <strong>${prefix}-${to}</strong>)<br><br>
+       <span style="color:var(--mid);font-size:13px;">All ${count} labels will be sent in a single print job.</span>`;
+    document.getElementById('modal-overlay').classList.add('show');
+  }
+
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+
+  function executePrintRange() {
+    closeModal();
+    const prefix = document.getElementById('range-prefix').value.trim().toUpperCase() || 'PA';
+    const from   = parseInt(document.getElementById('range-from').value) || 1;
+    const to     = parseInt(document.getElementById('range-to').value)   || 1;
+    const labels = [];
+    for (let i = from; i <= to; i++) labels.push(`${prefix}-${i}`);
+    labels.forEach(l => addToHistory(l));
+    doPrint(labels);
+    logToSheet(labels);
+    showToast(`✓ <span class="toast-bold">${labels.length} labels</span> sent to printer`);
+  }
+
+  // ── Print engine ──────────────────────────────────────
+  function doPrint(labels) {
+    printArea.innerHTML = labels.flatMap((label, li) =>
+      Array.from({length: 2}, (_, i) => `
+        <div class="print-page">
+          <div class="print-company">Flash Global</div>
+          <div class="print-project">Project Bluebell</div>
+          <div class="print-border">
+            <div class="print-sub">Pallet ID</div>
+            <div class="print-pallet-label">${label}</div>
+            <div class="print-copy-num">Copy ${i + 1} of 2</div>
+          </div>
+        </div>`)
+    ).join('');
+    window.print();
+  }
+
+  // ── Google Sheets ─────────────────────────────────────
+  function logToSheet(labels) {
+    const now  = new Date();
+    const date = now.toLocaleDateString('pt-BR');
+    const time = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    setSyncStatus('Saving to Google Sheets...', '');
+    Promise.all(labels.map(label =>
+      fetch(`${SCRIPT_URL}?label=${encodeURIComponent(label)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`, { method: 'GET', mode: 'no-cors' })
+    ))
+    .then(() => setSyncStatus(`✓ ${labels.length} label${labels.length > 1 ? 's' : ''} saved`, 'ok'))
+    .catch(() => setSyncStatus('⚠ Could not save to sheet', 'err'));
+  }
+
+  async function exportCSV() {
+    setSyncStatus('Fetching from Google Sheets...', '');
+    try {
+      const res  = await fetch(`${SCRIPT_URL}?action=export`);
+      const data = await res.json();
+      if (!data || !data.length) { setSyncStatus('No data found.', 'err'); return; }
+      const csv = [['Label','Date','Time'], ...data.map(r => [r.label, r.date, r.time])]
+        .map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+      const a = Object.assign(document.createElement('a'), {
+        href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' })),
+        download: `bluebell-history-${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.csv`
+      });
+      a.click();
+      setSyncStatus(`✓ Downloaded ${data.length} records`, 'ok');
+    } catch(e) { setSyncStatus('⚠ Could not fetch data', 'err'); }
+  }
+
+  // ── Helpers ───────────────────────────────────────────
+  function addToHistory(label) {
+    if (!recentLabels.includes(label)) {
+      recentLabels.unshift(label);
+      if (recentLabels.length > 16) recentLabels.pop();
+      renderHistory();
+    }
+  }
+  function renderHistory() {
+    historyList.innerHTML = recentLabels.map(l =>
+      `<div class="history-chip" onclick="loadLabel('${l}')">${l}</div>`
+    ).join('');
+  }
+  function loadLabel(label) {
+    const parts = label.split('-');
+    prefixEl.value = parts[0]; numEl.value = parts[1];
+    updatePreview(); setMode('single');
+  }
+  function showToast(html) {
+    toastMsg.innerHTML = html;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 4000);
+  }
+  function setSyncStatus(msg, type) {
+    syncEl.textContent = msg; syncEl.className = 'sync-status' + (type ? ' ' + type : '');
+    if (type === 'ok') setTimeout(() => { syncEl.textContent = ''; syncEl.className = 'sync-status'; }, 3500);
+  }
+
+  prefixEl.addEventListener('input', updatePreview);
+  numEl.addEventListener('input', updatePreview);
+  document.getElementById('range-prefix').addEventListener('input', updateRangePreview);
+  document.getElementById('range-from').addEventListener('input', updateRangePreview);
+  document.getElementById('range-to').addEventListener('input', updateRangePreview);
+
+  document.addEventListener('keydown', e => {
+    if (currentMode === 'single') {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowUp') step(1);
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowDown') step(-1);
+      if (e.key === 'Enter') printSingle();
+    }
+    if (e.key === 'Escape') closeModal();
+  });
+  document.getElementById('modal-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  updatePreview();
+</script>
+</body>
+</html>
